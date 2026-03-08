@@ -3,6 +3,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from src.storage.models import TradeRecord
+
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS trades (
@@ -25,3 +27,32 @@ def init_db(db_path: Path) -> None:
     with sqlite3.connect(db_path) as connection:
         connection.executescript(SCHEMA)
         connection.commit()
+
+
+def upsert_trades(db_path: Path, trades: list[TradeRecord]) -> int:
+    init_db(db_path)
+    with sqlite3.connect(db_path) as connection:
+        connection.executemany(
+            """
+            INSERT OR REPLACE INTO trades (
+                trade_id, symbol, side, price, quantity, pnl, leverage, timestamp, hour_utc, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    trade.trade_id,
+                    trade.symbol,
+                    trade.side,
+                    trade.price,
+                    trade.quantity,
+                    trade.pnl,
+                    trade.leverage,
+                    trade.timestamp.isoformat(),
+                    trade.hour_utc,
+                    trade.notes,
+                )
+                for trade in trades
+            ],
+        )
+        connection.commit()
+    return len(trades)
