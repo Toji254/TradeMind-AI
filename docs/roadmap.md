@@ -23,23 +23,30 @@
 - [x] add local symbol discovery
 - [x] analyze local history through detector pipeline
 - [x] generate coaching-style reports
-- [ ] add richer behavioral detectors
+- [x] add richer behavioral detectors
 - [ ] improve trade outcome inference
 
 ## Phase 4 - Coaching Layer
 
-- [ ] generate intervention suggestions tied to specific patterns
-- [ ] add journaling input + sentiment tagging
+- [x] generate intervention suggestions tied to specific patterns
+- [x] add journaling input + sentiment tagging
 - [ ] track repeated behaviors over time
 
-## Phase 5 - OpenClaw Experience
+## Phase 5 - Product Experience
+
+- [x] create a polished dark-mode web UI
+- [x] support local sync + analysis from the dashboard
+- [x] expose journal capture in the UI
+- [ ] add trend charts and weekly review cards
+
+## Phase 6 - OpenClaw Experience
 
 - [ ] create OpenClaw-facing skill/workflow
 - [ ] support conversational analysis requests
 - [ ] schedule daily mindset prompts and reminders
 
-## Phase 6 - Advanced Features
+## Phase 7 - Advanced Features
 
 - [ ] anomaly detection
-- [ ] progress dashboard
+- [ ] progress dashboard history
 - [ ] opt-in anonymized research workflows

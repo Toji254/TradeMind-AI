@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TradeMind AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+  <main class="shell">
+    <section class="hero glass">
+      <div>
+        <div class="eyebrow">PRIVATE TRADING PSYCHOLOGY</div>
+        <h1>TradeMind AI</h1>
+        <p class="lede">A local-first behavioral coach for traders. Sync your Binance testnet history, surface emotional patterns, and turn them into concrete guardrails.</p>
+      </div>
+      <div class="hero-score">
+        <span>Behavioral score</span>
+        <strong>{{ summary.behavioral_score if summary.behavioral_score is defined else 50 }}</strong>
+        <small>discipline index</small>
+      </div>
+    </section>
+
+    {% if status %}
+    <section class="notice glass">{{ status }}</section>
+    {% endif %}
+
+    <section class="grid top-grid">
+      <article class="card glass stat-card">
+        <span>Trades</span>
+        <strong>{{ summary.trade_count }}</strong>
+        <small>{{ summary.buy_count }} buys · {{ summary.sell_count }} sells</small>
+      </article>
+      <article class="card glass stat-card">
+        <span>Patterns</span>
+        <strong>{{ summary.pattern_count }}</strong>
+        <small>behavioral signals detected</small>
+      </article>
+      <article class="card glass stat-card">
+        <span>Symbols</span>
+        <strong>{{ summary.symbols|length }}</strong>
+        <small>{{ summary.symbols|join(', ') if summary.symbols else 'No synced symbols yet' }}</small>
+      </article>
+      <article class="card glass stat-card">
+        <span>Proxy impact</span>
+        <strong>{{ '%.4f'|format(summary.total_pnl) }}</strong>
+        <small>local fee / pnl proxy</small>
+      </article>
+    </section>
+
+    <section class="grid main-grid">
+      <article class="card glass control-panel">
+        <h2>Sync trades</h2>
+        <form method="post" action="/sync" class="stack">
+          <label>
+            <span>Symbol</span>
+            <input type="text" name="symbol" value="{{ symbol or 'BTCUSDT' }}" placeholder="BTCUSDT" />
+          </label>
+          <label>
+            <span>Limit</span>
+            <input type="number" name="limit" value="{{ limit }}" min="1" max="1000" />
+          </label>
+          <button type="submit">Sync and refresh</button>
+        </form>
+
+        <div class="divider"></div>
+
+        <h3>Available local symbols</h3>
+        <div class="chip-row">
+          {% for sym, count in symbols %}
+            <a class="chip" href="/?symbol={{ sym }}&limit={{ limit }}">{{ sym }} <em>{{ count }}</em></a>
+          {% else %}
+            <span class="muted">No synced symbols yet</span>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="card glass coach-panel">
+        <h2>Coach summary</h2>
+        <pre class="coach-copy">{{ summary.coach_text }}</pre>
+      </article>
+    </section>
+
+    <section class="grid secondary-grid">
+      <article class="card glass">
+        <h2>Detected patterns</h2>
+        <div class="pattern-list">
+          {% for pattern in summary.patterns %}
+          <div class="pattern-item">
+            <div class="pattern-head">
+              <div>
+                <h3>{{ pattern.pattern }}</h3>
+                <p>{{ pattern.summary }}</p>
+              </div>
+              <div class="confidence">{{ (pattern.confidence * 100)|round|int }}%</div>
+            </div>
+            <div class="evidence">Evidence: {{ pattern.evidence }}</div>
+            <ul>
+              {% for item in pattern.coaching %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% else %}
+          <p class="muted">No strong patterns detected yet. Sync more trades or vary your test behavior.</p>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="card glass">
+        <h2>Guardrail plan</h2>
+        <ul class="plan-list">
+          {% for item in summary.intervention_plan %}
+          <li>{{ item }}</li>
+          {% else %}
+          <li>No intervention plan yet.</li>
+          {% endfor %}
+        </ul>
+      </article>
+    </section>
+
+    <section class="grid secondary-grid">
+      <article class="card glass">
+        <h2>Journal</h2>
+        <form method="post" action="/journal" class="stack journal-form">
+          <label>
+            <span>Tag</span>
+            <select name="tag">
+              <option value="general">general</option>
+              <option value="pretrade">pretrade</option>
+              <option value="posttrade">posttrade</option>
+              <option value="fear">fear</option>
+              <option value="confidence">confidence</option>
+              <option value="revenge">revenge</option>
+            </select>
+          </label>
+          <label>
+            <span>Entry</span>
+            <textarea name="text" rows="4" placeholder="What are you feeling or justifying right now?"></textarea>
+          </label>
+          <button type="submit">Save journal entry</button>
+        </form>
+      </article>
+
+      <article class="card glass">
+        <h2>Recent entries</h2>
+        <div class="journal-list">
+          {% for entry in summary.journal_entries %}
+          <div class="journal-item">
+            <div class="journal-meta">
+              <span class="tag">{{ entry.tag }}</span>
+              <span class="sentiment">sentiment {{ '%.2f'|format(entry.sentiment_compound) }}</span>
+            </div>
+            <p>{{ entry.text }}</p>
+            <small>{{ entry.created_at }}</small>
+          </div>
+          {% else %}
+          <p class="muted">No journal entries yet.</p>
+          {% endfor %}
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

@@ -12,6 +12,7 @@ It then turns those findings into:
 - real-time intervention suggestions
 - better long-term discipline
 - a local journal-backed feedback loop
+- a polished dark-mode dashboard
 
 ## Core Principles
 
@@ -37,6 +38,7 @@ It then turns those findings into:
 - journal entry capture with sentiment scoring
 - generated intervention / guardrail plans
 - JSON analysis output for future UI or OpenClaw delivery
+- dark-mode web UI with dashboard, patterns, journal, and sync actions
 
 ## Example Questions TradeMind AI Can Answer
 
@@ -58,6 +60,18 @@ python -m src.app.cli init
 python -m src.app.cli sync-and-analyze --symbol BTCUSDT
 ```
 
+## Run the Web UI
+
+```bash
+python -m src.app.cli serve-web --host 127.0.0.1 --port 8000
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
 ## Useful Commands
 
 ```bash
@@ -68,6 +82,7 @@ python -m src.app.cli analyze-local --symbol BTCUSDT --limit 50
 python -m src.app.cli coaching-plan --symbol BTCUSDT
 python -m src.app.cli journal-add --tag pretrade "Feeling impatient after missing the move"
 python -m src.app.cli journal-list
+python -m src.app.cli serve-web
 ```
 
 ## Safety / Positioning
@@ -82,4 +97,4 @@ Its purpose is to help traders improve discipline, self-awareness, and risk beha
 - better realized outcome inference from fills/orders
 - richer journaling and progress tracking
 - OpenClaw-native conversational workflows
-- dashboard / review views
+- dashboard trend views and weekly review surfaces

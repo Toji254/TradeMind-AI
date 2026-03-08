@@ -54,6 +54,14 @@ def demo() -> None:
     console.print(coach.summarize(trades, results))
 
 
+@app.command("serve-web")
+def serve_web(host: str = typer.Option("127.0.0.1"), port: int = typer.Option(8000)) -> None:
+    """Run the local dark-mode web UI."""
+    import uvicorn
+
+    uvicorn.run("src.web.app:app", host=host, port=port, reload=False)
+
+
 @app.command("binance-ping")
 def binance_ping(market: str = typer.Option("spot", help="spot or futures")) -> None:
     client = _build_client(market)

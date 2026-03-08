@@ -8,3 +8,9 @@ rich
 sqlalchemy
 pydantic
 vaderSentiment
+requests
+fastapi
+uvicorn
+jinja2
+python-multipart
+httpx
