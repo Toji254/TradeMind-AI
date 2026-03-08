@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -7,8 +9,10 @@ from rich.table import Table
 from src.analysis.engine import AnalysisEngine
 from src.analysis.sample_data import sample_trades
 from src.app.config import settings
+from src.coaching.coach import Coach
 from src.connectors.binance_client import BinanceClient, BinanceCredentials
-from src.storage.local_db import init_db, upsert_trades
+from src.reports.summary import render_summary
+from src.storage.local_db import init_db, list_symbols, load_trades, upsert_trades
 
 app = typer.Typer(help="TradeMind AI command line interface")
 console = Console()
@@ -38,14 +42,11 @@ def init() -> None:
 def demo() -> None:
     """Run sample behavioral analysis using demo trades."""
     engine = AnalysisEngine()
-    results = engine.run(sample_trades())
+    coach = Coach()
+    trades = sample_trades()
+    results = engine.run(trades)
     console.print("[bold cyan]TradeMind AI Demo Analysis[/bold cyan]")
-    for result in results:
-        console.print(f"\n[bold]{result.pattern}[/bold] ({result.confidence:.0%})")
-        console.print(result.summary)
-        if result.coaching:
-            for suggestion in result.coaching:
-                console.print(f"- {suggestion}")
+    console.print(coach.summarize(trades, results))
 
 
 @app.command("binance-ping")
@@ -89,6 +90,42 @@ def binance_account(market: str = typer.Option("spot", help="spot or futures")) 
     table.add_column("Non-zero Balances")
     table.add_row(str(account.get("canTrade")), str(account.get("canWithdraw")), str(len(non_zero)))
     console.print(table)
+
+
+@app.command("list-symbols")
+def local_symbols() -> None:
+    """List locally stored symbols with trade counts."""
+    symbols = list_symbols(settings.db_path)
+    table = Table(title="Local Symbols")
+    table.add_column("Symbol")
+    table.add_column("Trades")
+    for symbol, count in symbols:
+        table.add_row(symbol, str(count))
+    if not symbols:
+        table.add_row("(none)", "0")
+    console.print(table)
+
+
+@app.command("analyze-local")
+def analyze_local(
+    symbol: str | None = typer.Option(None, help="Optional symbol filter, e.g. BTCUSDT"),
+    limit: int = typer.Option(100, min=1, max=5000),
+    as_json: bool = typer.Option(False, "--json", help="Output machine-readable JSON summary"),
+) -> None:
+    """Analyze synced local trades and produce a behavioral report."""
+    trades = load_trades(settings.db_path, symbol=symbol, limit=limit)
+    engine = AnalysisEngine()
+    coach = Coach()
+    results = engine.run(trades)
+
+    if as_json:
+        console.print_json(json.dumps(render_summary(results, trades)))
+        return
+
+    console.print("[bold cyan]TradeMind AI Local Analysis[/bold cyan]")
+    if symbol:
+        console.print(f"Symbol filter: [bold]{symbol.upper()}[/bold]")
+    console.print(coach.summarize(trades, results))
 
 
 def _build_client(market: str) -> BinanceClient:
