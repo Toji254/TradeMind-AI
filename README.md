@@ -2,7 +2,7 @@
 
 TradeMind AI is an open-source, privacy-first OpenClaw assistant that acts like a confidential trading psychologist.
 
-Instead of promising market predictions, it analyzes your personal trading behavior locally to uncover patterns like FOMO buying, panic selling, revenge trading, over-sizing after losses, and time-based impulsive decision making.
+Instead of pretending to predict the market, it analyzes your personal trading behavior locally to uncover emotional patterns like FOMO buying, panic selling, revenge trading, overtrading, poor streak behavior, and time-based impulsive decision making.
 
 It then turns those findings into:
 
@@ -11,6 +11,7 @@ It then turns those findings into:
 - behavioral strategy tweaks
 - real-time intervention suggestions
 - better long-term discipline
+- a local journal-backed feedback loop
 
 ## Core Principles
 
@@ -20,44 +21,31 @@ It then turns those findings into:
 - **Open source** — pattern detectors and workflows are transparent
 - **Local processing** — no cloud analytics required for the core product
 
-## MVP Scope
+## Current V1 Capabilities
 
-The first version focuses on:
+- Binance Spot Testnet account connectivity
+- local trade sync into SQLite
+- local symbol discovery
+- behavior detectors for:
+  - FOMO buying
+  - panic selling
+  - revenge trading
+  - streak behavior
+  - time-of-day loss concentration
+  - rapid-fire overtrading
+- coaching-style local analysis reports
+- journal entry capture with sentiment scoring
+- generated intervention / guardrail plans
+- JSON analysis output for future UI or OpenClaw delivery
 
-1. importing Binance trade history locally
-2. storing it in a local SQLite database
-3. detecting behavioral patterns with explainable detectors
-4. generating plain-language coaching summaries
-5. supporting future OpenClaw conversational workflows
-
-## Planned Capabilities
-
-- Binance trade sync
-- behavioral pattern detection
-- journaling and sentiment tagging
-- coaching summaries
-- anti-impulse rule suggestions
-- progress tracking and weekly reviews
-
-## Example Questions TradeMind AI Should Answer
+## Example Questions TradeMind AI Can Answer
 
 - "Analyze my last 20 trades"
 - "What emotional patterns am I repeating?"
 - "Do I over-size after losses?"
 - "What time of day do I trade the worst?"
-- "Help me build a rule to stop revenge trading"
-
-## Architecture Overview
-
-- `src/app/` — CLI and config
-- `src/connectors/` — exchange and market data integrations
-- `src/storage/` — SQLite models and persistence
-- `src/analysis/` — behavior detectors and profiling
-- `src/coaching/` — insight translation and interventions
-- `src/journal/` — journaling and sentiment helpers
-- `src/rules/` — user-defined guardrails
-- `src/reports/` — summaries and dashboard-ready output
-- `tests/` — automated tests
+- "Am I panic selling?"
+- "Give me a coaching plan for BTCUSDT"
 
 ## Quick Start
 
@@ -66,6 +54,20 @@ python -m venv .venv
 .venv\\Scripts\\activate
 pip install -r requirements.txt
 python -m src.app.cli doctor
+python -m src.app.cli init
+python -m src.app.cli sync-and-analyze --symbol BTCUSDT
+```
+
+## Useful Commands
+
+```bash
+python -m src.app.cli binance-ping --market spot
+python -m src.app.cli binance-account --market spot
+python -m src.app.cli sync-binance --symbol BTCUSDT --limit 50
+python -m src.app.cli analyze-local --symbol BTCUSDT --limit 50
+python -m src.app.cli coaching-plan --symbol BTCUSDT
+python -m src.app.cli journal-add --tag pretrade "Feeling impatient after missing the move"
+python -m src.app.cli journal-list
 ```
 
 ## Safety / Positioning
@@ -74,6 +76,10 @@ TradeMind AI is **not** a financial advisor and does **not** provide guaranteed 
 
 Its purpose is to help traders improve discipline, self-awareness, and risk behavior.
 
-## Status
+## Next Steps
 
-This repository is now under active MVP development.
+- Futures testnet integration
+- better realized outcome inference from fills/orders
+- richer journaling and progress tracking
+- OpenClaw-native conversational workflows
+- dashboard / review views

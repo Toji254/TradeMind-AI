@@ -4,6 +4,8 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
+from src.journal.models import JournalEntry
+from src.journal.sentiment import score_text
 from src.storage.models import TradeRecord
 
 
@@ -19,6 +21,14 @@ CREATE TABLE IF NOT EXISTS trades (
     timestamp TEXT NOT NULL,
     hour_utc INTEGER NOT NULL,
     notes TEXT
+);
+
+CREATE TABLE IF NOT EXISTS journal_entries (
+    entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    tag TEXT NOT NULL,
+    text TEXT NOT NULL,
+    sentiment_compound REAL NOT NULL
 );
 """
 
@@ -100,3 +110,39 @@ def list_symbols(db_path: Path) -> list[tuple[str, int]]:
             "SELECT symbol, COUNT(*) as trade_count FROM trades GROUP BY symbol ORDER BY trade_count DESC, symbol ASC"
         ).fetchall()
     return [(row[0], row[1]) for row in rows]
+
+
+def add_journal_entry(db_path: Path, tag: str, text: str) -> int:
+    init_db(db_path)
+    sentiment = score_text(text).get("compound", 0.0)
+    created_at = datetime.now().astimezone().isoformat()
+    with sqlite3.connect(db_path) as connection:
+        cursor = connection.execute(
+            "INSERT INTO journal_entries (created_at, tag, text, sentiment_compound) VALUES (?, ?, ?, ?)",
+            (created_at, tag, text, sentiment),
+        )
+        connection.commit()
+        return int(cursor.lastrowid)
+
+
+def load_journal_entries(db_path: Path, limit: int = 20, tag: str | None = None) -> list[JournalEntry]:
+    init_db(db_path)
+    query = "SELECT entry_id, created_at, tag, text, sentiment_compound FROM journal_entries"
+    params: list[object] = []
+    if tag:
+        query += " WHERE tag = ?"
+        params.append(tag)
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    with sqlite3.connect(db_path) as connection:
+        rows = connection.execute(query, params).fetchall()
+    return [
+        JournalEntry(
+            entry_id=row[0],
+            created_at=datetime.fromisoformat(row[1]),
+            tag=row[2],
+            text=row[3],
+            sentiment_compound=row[4],
+        )
+        for row in rows
+    ]
