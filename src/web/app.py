@@ -19,13 +19,20 @@ service = TradeMindService()
 
 
 @app.get("/", response_class=HTMLResponse)
-def dashboard(request: Request, symbol: str | None = None, limit: int = 100, status: str | None = None) -> HTMLResponse:
+def dashboard(
+    request: Request,
+    symbol: str | None = None,
+    limit: int = 100,
+    market: str = "spot",
+    status: str | None = None,
+) -> HTMLResponse:
     summary = service.analyze_local(symbol=symbol, limit=limit)
     context = {
         "request": request,
         "summary": summary,
         "symbols": list_symbols(settings.db_path),
         "symbol": symbol,
+        "market": market,
         "limit": limit,
         "status": status,
     }
@@ -33,12 +40,15 @@ def dashboard(request: Request, symbol: str | None = None, limit: int = 100, sta
 
 
 @app.post("/sync")
-def sync(symbol: str = Form(...), limit: int = Form(100)) -> RedirectResponse:
-    inserted = service.sync_symbol(symbol=symbol, limit=limit)
-    return RedirectResponse(url=f"/?symbol={symbol.upper()}&limit={limit}&status=Synced+{inserted}+trades", status_code=303)
+def sync(symbol: str = Form(...), limit: int = Form(100), market: str = Form("spot")) -> RedirectResponse:
+    inserted = service.sync_symbol(symbol=symbol, limit=limit, market=market)
+    return RedirectResponse(url=f"/?symbol={symbol.upper()}&market={market}&limit={limit}&status=Synced+{inserted}+{market}+trades", status_code=303)
 
 
 @app.post("/journal")
-def journal(tag: str = Form("general"), text: str = Form(...)) -> RedirectResponse:
+def journal(tag: str = Form("general"), text: str = Form(...), symbol: str = Form(""), market: str = Form("spot"), limit: int = Form(100)) -> RedirectResponse:
     add_journal_entry(settings.db_path, tag=tag, text=text)
-    return RedirectResponse(url="/?status=Journal+entry+saved", status_code=303)
+    query = f"/?market={market}&limit={limit}&status=Journal+entry+saved"
+    if symbol:
+        query = f"/?symbol={symbol.upper()}&market={market}&limit={limit}&status=Journal+entry+saved"
+    return RedirectResponse(url=query, status_code=303)

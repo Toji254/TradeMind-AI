@@ -8,126 +8,149 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="bg-orb orb-a"></div>
-  <div class="bg-orb orb-b"></div>
-  <main class="shell">
-    <section class="hero glass">
-      <div>
-        <div class="eyebrow">PRIVATE TRADING PSYCHOLOGY</div>
-        <h1>TradeMind AI</h1>
-        <p class="lede">A local-first behavioral coach for traders. Sync your Binance testnet history, surface emotional patterns, and turn them into concrete guardrails.</p>
+  <main class="shell okx-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-mark">TM</div>
+        <div>
+          <div class="brand-title">TradeMind AI</div>
+          <div class="brand-sub">Behavioral analysis terminal</div>
+        </div>
       </div>
-      <div class="hero-score">
-        <span>Behavioral score</span>
+      <div class="topbar-actions">
+        <span class="market-pill {{ market }}">{{ market|upper }}</span>
+        <span class="status-pill">local-first</span>
+      </div>
+    </header>
+
+    {% if status %}
+    <section class="notice">{{ status }}</section>
+    {% endif %}
+
+    <section class="hero okx-panel">
+      <div class="hero-copy">
+        <div class="eyebrow">TRADING PSYCHOLOGY · PRIVATE · ON-DEVICE</div>
+        <h1>See your patterns before they become habits.</h1>
+        <p class="lede">Sync Binance testnet history, inspect behavioral signals, and turn weak spots into guardrails with a serious dark trading interface.</p>
+      </div>
+      <div class="hero-score terminal-box">
+        <span>Behavioral Score</span>
         <strong>{{ summary.behavioral_score if summary.behavioral_score is defined else 50 }}</strong>
         <small>discipline index</small>
       </div>
     </section>
 
-    {% if status %}
-    <section class="notice glass">{{ status }}</section>
-    {% endif %}
-
-    <section class="grid top-grid">
-      <article class="card glass stat-card">
-        <span>Trades</span>
-        <strong>{{ summary.trade_count }}</strong>
-        <small>{{ summary.buy_count }} buys · {{ summary.sell_count }} sells</small>
-      </article>
-      <article class="card glass stat-card">
-        <span>Patterns</span>
-        <strong>{{ summary.pattern_count }}</strong>
-        <small>behavioral signals detected</small>
-      </article>
-      <article class="card glass stat-card">
-        <span>Symbols</span>
-        <strong>{{ summary.symbols|length }}</strong>
-        <small>{{ summary.symbols|join(', ') if summary.symbols else 'No synced symbols yet' }}</small>
-      </article>
-      <article class="card glass stat-card">
-        <span>Proxy impact</span>
-        <strong>{{ '%.4f'|format(summary.total_pnl) }}</strong>
-        <small>local fee / pnl proxy</small>
-      </article>
+    <section class="stats-grid">
+      <article class="stat-tile okx-panel"><span>Trades</span><strong>{{ summary.trade_count }}</strong><small>{{ summary.buy_count }} buys · {{ summary.sell_count }} sells</small></article>
+      <article class="stat-tile okx-panel"><span>Patterns</span><strong>{{ summary.pattern_count }}</strong><small>signals detected</small></article>
+      <article class="stat-tile okx-panel"><span>Symbols</span><strong>{{ summary.symbols|length }}</strong><small>{{ summary.symbols|join(', ') if summary.symbols else 'None synced' }}</small></article>
+      <article class="stat-tile okx-panel"><span>Proxy Impact</span><strong>{{ '%.4f'|format(summary.total_pnl) }}</strong><small>current local metric</small></article>
     </section>
 
-    <section class="grid main-grid">
-      <article class="card glass control-panel">
-        <h2>Sync trades</h2>
-        <form method="post" action="/sync" class="stack">
-          <label>
-            <span>Symbol</span>
-            <input type="text" name="symbol" value="{{ symbol or 'BTCUSDT' }}" placeholder="BTCUSDT" />
-          </label>
-          <label>
-            <span>Limit</span>
-            <input type="number" name="limit" value="{{ limit }}" min="1" max="1000" />
-          </label>
-          <button type="submit">Sync and refresh</button>
-        </form>
+    <section class="dashboard-grid">
+      <aside class="left-rail">
+        <article class="okx-panel control-box">
+          <div class="panel-heading"><h2>Sync</h2><span>exchange</span></div>
+          <form method="post" action="/sync" class="stack compact-form">
+            <label>
+              <span>Market</span>
+              <select name="market">
+                <option value="spot" {% if market == 'spot' %}selected{% endif %}>Spot</option>
+                <option value="futures" {% if market == 'futures' %}selected{% endif %}>Futures</option>
+              </select>
+            </label>
+            <label>
+              <span>Symbol</span>
+              <input type="text" name="symbol" value="{{ symbol or 'BTCUSDT' }}" placeholder="BTCUSDT" />
+            </label>
+            <label>
+              <span>Limit</span>
+              <input type="number" name="limit" value="{{ limit }}" min="1" max="1000" />
+            </label>
+            <button type="submit">Sync market data</button>
+          </form>
+        </article>
 
-        <div class="divider"></div>
-
-        <h3>Available local symbols</h3>
-        <div class="chip-row">
-          {% for sym, count in symbols %}
-            <a class="chip" href="/?symbol={{ sym }}&limit={{ limit }}">{{ sym }} <em>{{ count }}</em></a>
-          {% else %}
-            <span class="muted">No synced symbols yet</span>
-          {% endfor %}
-        </div>
-      </article>
-
-      <article class="card glass coach-panel">
-        <h2>Coach summary</h2>
-        <pre class="coach-copy">{{ summary.coach_text }}</pre>
-      </article>
-    </section>
-
-    <section class="grid secondary-grid">
-      <article class="card glass">
-        <h2>Detected patterns</h2>
-        <div class="pattern-list">
-          {% for pattern in summary.patterns %}
-          <div class="pattern-item">
-            <div class="pattern-head">
-              <div>
-                <h3>{{ pattern.pattern }}</h3>
-                <p>{{ pattern.summary }}</p>
-              </div>
-              <div class="confidence">{{ (pattern.confidence * 100)|round|int }}%</div>
-            </div>
-            <div class="evidence">Evidence: {{ pattern.evidence }}</div>
-            <ul>
-              {% for item in pattern.coaching %}
-              <li>{{ item }}</li>
-              {% endfor %}
-            </ul>
+        <article class="okx-panel control-box">
+          <div class="panel-heading"><h2>Symbols</h2><span>local db</span></div>
+          <div class="symbol-list">
+            {% for sym, count in symbols %}
+              <a class="symbol-row {% if symbol == sym %}active{% endif %}" href="/?symbol={{ sym }}&market={{ market }}&limit={{ limit }}">
+                <span>{{ sym }}</span>
+                <em>{{ count }}</em>
+              </a>
+            {% else %}
+              <div class="muted">No symbols synced yet</div>
+            {% endfor %}
           </div>
-          {% else %}
-          <p class="muted">No strong patterns detected yet. Sync more trades or vary your test behavior.</p>
-          {% endfor %}
-        </div>
-      </article>
+        </article>
+      </aside>
 
-      <article class="card glass">
-        <h2>Guardrail plan</h2>
-        <ul class="plan-list">
-          {% for item in summary.intervention_plan %}
-          <li>{{ item }}</li>
-          {% else %}
-          <li>No intervention plan yet.</li>
-          {% endfor %}
-        </ul>
-      </article>
+      <section class="center-stage">
+        <article class="okx-panel chart-panel">
+          <div class="panel-heading"><h2>Equity Curve</h2><span>{{ summary.selected_symbol or 'all symbols' }}</span></div>
+          <canvas id="equityChart" height="130"></canvas>
+        </article>
+
+        <div class="dual-grid">
+          <article class="okx-panel chart-panel small">
+            <div class="panel-heading"><h2>Hourly Activity</h2><span>UTC</span></div>
+            <canvas id="hourlyChart" height="160"></canvas>
+          </article>
+          <article class="okx-panel chart-panel small">
+            <div class="panel-heading"><h2>Side Mix</h2><span>flow</span></div>
+            <canvas id="sideChart" height="160"></canvas>
+          </article>
+        </div>
+
+        <article class="okx-panel coach-panel">
+          <div class="panel-heading"><h2>Coach Summary</h2><span>behavior engine</span></div>
+          <pre class="coach-copy">{{ summary.coach_text }}</pre>
+        </article>
+      </section>
+
+      <aside class="right-rail">
+        <article class="okx-panel">
+          <div class="panel-heading"><h2>Detected Patterns</h2><span>{{ summary.pattern_count }}</span></div>
+          <div class="pattern-list">
+            {% for pattern in summary.patterns %}
+            <div class="pattern-item terminal-box">
+              <div class="pattern-top">
+                <h3>{{ pattern.pattern }}</h3>
+                <strong>{{ (pattern.confidence * 100)|round|int }}%</strong>
+              </div>
+              <p>{{ pattern.summary }}</p>
+              <div class="evidence">{{ pattern.evidence }}</div>
+            </div>
+            {% else %}
+            <p class="muted">No patterns yet.</p>
+            {% endfor %}
+          </div>
+        </article>
+
+        <article class="okx-panel">
+          <div class="panel-heading"><h2>Guardrail Plan</h2><span>actionable</span></div>
+          <ul class="plan-list">
+            {% for item in summary.intervention_plan %}
+            <li>{{ item }}</li>
+            {% else %}
+            <li>No guardrails suggested yet.</li>
+            {% endfor %}
+          </ul>
+        </article>
+      </aside>
     </section>
 
-    <section class="grid secondary-grid">
-      <article class="card glass">
-        <h2>Journal</h2>
-        <form method="post" action="/journal" class="stack journal-form">
+    <section class="journal-grid">
+      <article class="okx-panel">
+        <div class="panel-heading"><h2>Journal Entry</h2><span>psychology log</span></div>
+        <form method="post" action="/journal" class="stack compact-form">
+          <input type="hidden" name="symbol" value="{{ symbol or '' }}" />
+          <input type="hidden" name="market" value="{{ market }}" />
+          <input type="hidden" name="limit" value="{{ limit }}" />
           <label>
             <span>Tag</span>
             <select name="tag">
@@ -141,20 +164,20 @@
           </label>
           <label>
             <span>Entry</span>
-            <textarea name="text" rows="4" placeholder="What are you feeling or justifying right now?"></textarea>
+            <textarea name="text" rows="4" placeholder="What are you feeling, rationalizing, or ignoring right now?"></textarea>
           </label>
-          <button type="submit">Save journal entry</button>
+          <button type="submit">Save journal note</button>
         </form>
       </article>
 
-      <article class="card glass">
-        <h2>Recent entries</h2>
+      <article class="okx-panel">
+        <div class="panel-heading"><h2>Recent Journal</h2><span>{{ summary.journal_entries|length }}</span></div>
         <div class="journal-list">
           {% for entry in summary.journal_entries %}
           <div class="journal-item">
-            <div class="journal-meta">
+            <div class="journal-head">
               <span class="tag">{{ entry.tag }}</span>
-              <span class="sentiment">sentiment {{ '%.2f'|format(entry.sentiment_compound) }}</span>
+              <span class="sentiment">{{ '%.2f'|format(entry.sentiment_compound) }}</span>
             </div>
             <p>{{ entry.text }}</p>
             <small>{{ entry.created_at }}</small>
@@ -166,5 +189,70 @@
       </article>
     </section>
   </main>
+
+  <script>
+    const charts = {{ summary.charts | tojson }};
+
+    const axisColor = '#6b7280';
+    const gridColor = 'rgba(255,255,255,0.06)';
+
+    new Chart(document.getElementById('equityChart'), {
+      type: 'line',
+      data: {
+        labels: charts.equity_curve.map(p => p.x),
+        datasets: [{
+          label: 'Equity Curve',
+          data: charts.equity_curve.map(p => p.value),
+          borderColor: '#ffffff',
+          backgroundColor: 'rgba(255,255,255,0.04)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: axisColor }, grid: { color: gridColor } },
+          y: { ticks: { color: axisColor }, grid: { color: gridColor } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('hourlyChart'), {
+      type: 'bar',
+      data: {
+        labels: charts.hourly_activity.map(p => String(p.hour).padStart(2, '0')),
+        datasets: [{
+          label: 'Trades',
+          data: charts.hourly_activity.map(p => p.count),
+          backgroundColor: '#f5a623'
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: axisColor }, grid: { color: gridColor } },
+          y: { ticks: { color: axisColor }, grid: { color: gridColor } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('sideChart'), {
+      type: 'doughnut',
+      data: {
+        labels: charts.side_mix.map(p => p.label),
+        datasets: [{
+          data: charts.side_mix.map(p => p.value),
+          backgroundColor: ['#00b15d', '#ff5b5b']
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#d1d5db' } }
+        }
+      }
+    });
+  </script>
 </body>
 </html>

@@ -14,8 +14,9 @@
 
 - [x] integrate Binance spot testnet trade fetch/sync
 - [x] store trade history locally
-- [ ] support time-range and symbol filtering from exchange
-- [ ] add futures testnet sync
+- [x] wire futures-ready testnet sync path
+- [ ] provide futures testnet credentials and validate live sync
+- [ ] support time-range filtering from exchange
 
 ## Phase 3 - Analysis Pipeline
 
@@ -24,6 +25,7 @@
 - [x] analyze local history through detector pipeline
 - [x] generate coaching-style reports
 - [x] add richer behavioral detectors
+- [x] add chart-ready local analytics datasets
 - [ ] improve trade outcome inference
 
 ## Phase 4 - Coaching Layer
@@ -35,9 +37,11 @@
 ## Phase 5 - Product Experience
 
 - [x] create a polished dark-mode web UI
+- [x] restyle the UI toward an OKX-like dark terminal feel
 - [x] support local sync + analysis from the dashboard
 - [x] expose journal capture in the UI
-- [ ] add trend charts and weekly review cards
+- [x] add chart panels to the dashboard
+- [ ] add trend history and weekly review cards
 
 ## Phase 6 - OpenClaw Experience
 

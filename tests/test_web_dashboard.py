@@ -22,9 +22,10 @@ def test_dashboard_renders_with_local_data(tmp_path: Path) -> None:
             ],
         )
         client = TestClient(app)
-        response = client.get('/')
+        response = client.get('/?market=spot')
         assert response.status_code == 200
         assert 'TradeMind AI' in response.text
-        assert 'Behavioral score' in response.text
+        assert 'Behavioral Score' in response.text
+        assert 'Equity Curve' in response.text
     finally:
         settings.db_path = original_db

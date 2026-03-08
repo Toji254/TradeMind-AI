@@ -9,6 +9,7 @@ from rich.table import Table
 from src.analysis.engine import AnalysisEngine
 from src.analysis.sample_data import sample_trades
 from src.app.config import settings
+from src.app.services import TradeMindService
 from src.coaching.coach import Coach
 from src.coaching.interventions import build_intervention_plan
 from src.connectors.binance_client import BinanceClient, BinanceCredentials
@@ -24,6 +25,7 @@ from src.storage.local_db import (
 
 app = typer.Typer(help="TradeMind AI command line interface")
 console = Console()
+service = TradeMindService()
 
 
 @app.command()
@@ -56,16 +58,14 @@ def demo() -> None:
 
 @app.command("serve-web")
 def serve_web(host: str = typer.Option("127.0.0.1"), port: int = typer.Option(8000)) -> None:
-    """Run the local dark-mode web UI."""
     import uvicorn
-
     uvicorn.run("src.web.app:app", host=host, port=port, reload=False)
 
 
 @app.command("binance-ping")
 def binance_ping(market: str = typer.Option("spot", help="spot or futures")) -> None:
     client = _build_client(market)
-    client.ping()
+    client.ping(market=market)
     console.print(f"[green]{market} testnet ping succeeded[/green]")
 
 
@@ -75,12 +75,7 @@ def sync_binance(
     limit: int = typer.Option(50, min=1, max=1000),
     market: str = typer.Option("spot", help="spot or futures"),
 ) -> None:
-    if market != "spot":
-        raise typer.BadParameter("Futures sync is not implemented yet; config support exists but sync starts with spot.")
-
-    client = _build_client(market)
-    trades = client.fetch_and_normalize_trades(symbol=symbol, limit=limit)
-    inserted = upsert_trades(settings.db_path, trades)
+    inserted = service.sync_symbol(symbol=symbol, limit=limit, market=market)
     console.print(f"[green]Synced {inserted} {market} trades for {symbol} into {settings.db_path}[/green]")
 
 
@@ -96,19 +91,19 @@ def sync_and_analyze(
 
 @app.command("binance-account")
 def binance_account(market: str = typer.Option("spot", help="spot or futures")) -> None:
-    if market != "spot":
-        raise typer.BadParameter("Futures account snapshot is not implemented yet.")
-
     client = _build_client(market)
-    account = client.get_account()
-    balances = account.get("balances", [])
-    non_zero = [b for b in balances if float(b.get("free", 0)) or float(b.get("locked", 0))]
+    account = client.get_account(market=market)
+    balances = account.get("balances", account.get("assets", []))
+    if market == "spot":
+        non_zero = [b for b in balances if float(b.get("free", 0)) or float(b.get("locked", 0))]
+    else:
+        non_zero = [b for b in balances if float(b.get("walletBalance", 0))]
 
     table = Table(title=f"Binance {market.title()} Account Snapshot")
     table.add_column("Can Trade")
-    table.add_column("Can Withdraw")
+    table.add_column("Account Rows")
     table.add_column("Non-zero Balances")
-    table.add_row(str(account.get("canTrade")), str(account.get("canWithdraw")), str(len(non_zero)))
+    table.add_row(str(account.get("canTrade", True)), str(len(balances)), str(len(non_zero)))
     console.print(table)
 
 

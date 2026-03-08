@@ -12,7 +12,7 @@ It then turns those findings into:
 - real-time intervention suggestions
 - better long-term discipline
 - a local journal-backed feedback loop
-- a polished dark-mode dashboard
+- a dark-mode trading dashboard inspired by serious exchange UIs
 
 ## Core Principles
 
@@ -25,6 +25,7 @@ It then turns those findings into:
 ## Current V1 Capabilities
 
 - Binance Spot Testnet account connectivity
+- Futures-ready testnet config path and sync plumbing
 - local trade sync into SQLite
 - local symbol discovery
 - behavior detectors for:
@@ -38,16 +39,16 @@ It then turns those findings into:
 - journal entry capture with sentiment scoring
 - generated intervention / guardrail plans
 - JSON analysis output for future UI or OpenClaw delivery
-- dark-mode web UI with dashboard, patterns, journal, and sync actions
-
-## Example Questions TradeMind AI Can Answer
-
-- "Analyze my last 20 trades"
-- "What emotional patterns am I repeating?"
-- "Do I over-size after losses?"
-- "What time of day do I trade the worst?"
-- "Am I panic selling?"
-- "Give me a coaching plan for BTCUSDT"
+- OKX-inspired dark web UI with:
+  - dashboard stats
+  - local symbol switching
+  - sync form
+  - equity curve chart
+  - hourly activity chart
+  - side mix chart
+  - patterns panel
+  - guardrail plan panel
+  - journal workflow
 
 ## Quick Start
 
@@ -57,7 +58,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python -m src.app.cli doctor
 python -m src.app.cli init
-python -m src.app.cli sync-and-analyze --symbol BTCUSDT
+python -m src.app.cli sync-and-analyze --symbol BTCUSDT --market spot
 ```
 
 ## Run the Web UI
@@ -77,7 +78,8 @@ http://127.0.0.1:8000
 ```bash
 python -m src.app.cli binance-ping --market spot
 python -m src.app.cli binance-account --market spot
-python -m src.app.cli sync-binance --symbol BTCUSDT --limit 50
+python -m src.app.cli sync-binance --symbol BTCUSDT --limit 50 --market spot
+python -m src.app.cli sync-binance --symbol BTCUSDT --limit 50 --market futures
 python -m src.app.cli analyze-local --symbol BTCUSDT --limit 50
 python -m src.app.cli coaching-plan --symbol BTCUSDT
 python -m src.app.cli journal-add --tag pretrade "Feeling impatient after missing the move"
@@ -85,16 +87,17 @@ python -m src.app.cli journal-list
 python -m src.app.cli serve-web
 ```
 
+## Futures Note
+
+Futures support is now wired in the code path, but you still need to provide:
+
+- `BINANCE_FUTURES_API_KEY`
+- `BINANCE_FUTURES_API_SECRET`
+
+in your local `.env` before live futures testnet sync/auth can run.
+
 ## Safety / Positioning
 
 TradeMind AI is **not** a financial advisor and does **not** provide guaranteed returns, trade signals, or profit promises.
 
 Its purpose is to help traders improve discipline, self-awareness, and risk behavior.
-
-## Next Steps
-
-- Futures testnet integration
-- better realized outcome inference from fills/orders
-- richer journaling and progress tracking
-- OpenClaw-native conversational workflows
-- dashboard trend views and weekly review surfaces
