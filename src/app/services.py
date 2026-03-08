@@ -6,6 +6,8 @@ from src.analysis.engine import AnalysisEngine
 from src.app.config import settings
 from src.coaching.coach import Coach
 from src.connectors.binance_client import BinanceClient, BinanceCredentials
+from src.reports.account import summarize_futures_account, summarize_spot_account
+from src.reports.messaging import render_trader_brief
 from src.reports.summary import render_summary
 from src.storage.local_db import load_journal_entries, load_trades, upsert_trades
 
@@ -40,6 +42,23 @@ class TradeMindService:
         client = self._build_client(market)
         trades = client.fetch_and_normalize_trades(symbol=symbol, limit=limit, market=market)
         return upsert_trades(settings.db_path, trades)
+
+    def get_account_snapshot(self, market: str = "spot") -> dict:
+        client = self._build_client(market)
+        account = client.get_account(market=market)
+        if market == "spot":
+            prices = client.fetch_spot_prices()
+            return summarize_spot_account(account, prices=prices)
+        return summarize_futures_account(account)
+
+    def build_trader_brief(self, symbol: str | None = None, limit: int = 100, market: str = "spot") -> str:
+        summary = self.analyze_local(symbol=symbol, limit=limit)
+        account = None
+        try:
+            account = self.get_account_snapshot(market=market)
+        except Exception:
+            account = None
+        return render_trader_brief(summary, account=account, market=market)
 
     def _build_client(self, market: str) -> BinanceClient:
         if market == "spot":

@@ -20,7 +20,6 @@ from src.storage.local_db import (
     list_symbols,
     load_journal_entries,
     load_trades,
-    upsert_trades,
 )
 
 app = typer.Typer(help="TradeMind AI command line interface")
@@ -59,6 +58,7 @@ def demo() -> None:
 @app.command("serve-web")
 def serve_web(host: str = typer.Option("127.0.0.1"), port: int = typer.Option(8000)) -> None:
     import uvicorn
+
     uvicorn.run("src.web.app:app", host=host, port=port, reload=False)
 
 
@@ -90,21 +90,59 @@ def sync_and_analyze(
 
 
 @app.command("binance-account")
-def binance_account(market: str = typer.Option("spot", help="spot or futures")) -> None:
-    client = _build_client(market)
-    account = client.get_account(market=market)
-    balances = account.get("balances", account.get("assets", []))
-    if market == "spot":
-        non_zero = [b for b in balances if float(b.get("free", 0)) or float(b.get("locked", 0))]
-    else:
-        non_zero = [b for b in balances if float(b.get("walletBalance", 0))]
+def binance_account(market: str = typer.Option("spot", help="spot or futures"), as_json: bool = typer.Option(False, "--json")) -> None:
+    snapshot = service.get_account_snapshot(market=market)
+    if as_json:
+        console.print_json(json.dumps(snapshot))
+        return
 
     table = Table(title=f"Binance {market.title()} Account Snapshot")
-    table.add_column("Can Trade")
-    table.add_column("Account Rows")
-    table.add_column("Non-zero Balances")
-    table.add_row(str(account.get("canTrade", True)), str(len(balances)), str(len(non_zero)))
+    table.add_column("Metric")
+    table.add_column("Value")
+    for key, value in snapshot.items():
+        table.add_row(str(key), str(value))
     console.print(table)
+
+
+@app.command("profit-status")
+def profit_status(market: str = typer.Option("spot", help="spot or futures")) -> None:
+    snapshot = service.get_account_snapshot(market=market)
+    if market == "futures":
+        console.print(
+            f"Wallet: {snapshot['wallet_balance']:.2f} USDT | Unrealized: {snapshot['unrealized_profit']:.2f} USDT | Available: {snapshot['available_balance']:.2f} USDT"
+        )
+    else:
+        console.print(
+            f"Estimated spot account value: ~{snapshot['estimated_total_usdt']:.2f} USDT across {snapshot['asset_count']} assets"
+        )
+
+
+@app.command("trader-brief")
+def trader_brief(
+    symbol: str | None = typer.Option(None, help="Optional symbol filter"),
+    limit: int = typer.Option(100, min=1, max=5000),
+    market: str = typer.Option("spot", help="spot or futures"),
+) -> None:
+    console.print(service.build_trader_brief(symbol=symbol, limit=limit, market=market))
+
+
+@app.command("message-preview")
+def message_preview(
+    symbol: str | None = typer.Option(None),
+    limit: int = typer.Option(100, min=1, max=5000),
+    market: str = typer.Option("spot", help="spot or futures"),
+) -> None:
+    console.print(service.build_trader_brief(symbol=symbol, limit=limit, market=market))
+
+
+@app.command("openclaw-prompt")
+def openclaw_prompt(
+    symbol: str | None = typer.Option(None),
+    limit: int = typer.Option(100, min=1, max=5000),
+    market: str = typer.Option("spot", help="spot or futures"),
+) -> None:
+    brief = service.build_trader_brief(symbol=symbol, limit=limit, market=market)
+    console.print("Use this as the trader-facing OpenClaw message:\n\n" + brief)
 
 
 @app.command("list-symbols")

@@ -38,6 +38,12 @@ class BinanceClient:
         path = "/api/v3/account" if market == "spot" else "/fapi/v2/account"
         return self._signed_get(path)
 
+    def fetch_spot_prices(self) -> dict[str, float]:
+        response = self.session.get(f"{self.credentials.base_url}/api/v3/ticker/price", timeout=30)
+        response.raise_for_status()
+        rows = response.json()
+        return {row["symbol"]: float(row["price"]) for row in rows}
+
     def fetch_my_trades(self, symbol: str, limit: int = 50) -> list[dict]:
         return self._signed_get("/api/v3/myTrades", {"symbol": symbol.upper(), "limit": limit})
 
