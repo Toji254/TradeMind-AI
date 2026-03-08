@@ -1,6 +1,10 @@
-# Add project dependencies here
 pandas
 numpy
 scikit-learn
 python-dotenv
 pytest
+typer
+rich
+sqlalchemy
+pydantic
+vaderSentiment
