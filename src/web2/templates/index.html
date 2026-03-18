@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeMind AI - {{ market.title() }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span style="font-size: 1.8rem;">🧠</span> TradeMind AI
+        </div>
+        <nav class="nav-tabs">
+            <a href="/?market=spot" class="nav-tab {{ 'active' if market == 'spot' else '' }}">Spot</a>
+            <a href="/?market=futures" class="nav-tab {{ 'active' if market == 'futures' else '' }}">Futures</a>
+            <a href="#" class="nav-tab" onclick="document.getElementById('api-modal').style.display='flex'">Connect API</a>
+        </nav>
+        <div class="telegram-status" style="margin-left: auto; margin-right: 2rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+            <span>Telegram Bot:</span>
+            <span class="status-dot {{ 'status-online' if analysis and analysis.telegram_active else 'status-offline' }}"></span>
+            <span style="color: var(--text-muted);">{{ 'Connected' if analysis and analysis.telegram_active else 'Disconnected' }}</span>
+        </div>
+    </header>
+
+    <!-- API Key Modal (Privacy Focused) -->
+    <div id="api-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <h3 class="card-title">Connect Binance API <span onclick="this.closest('.modal-overlay').style.display='none'" style="cursor:pointer;">&times;</span></h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Securely connect your Binance account. Keys are stored locally and never sent to our servers.</p>
+            <div class="form-group">
+                <label>API Key</label>
+                <div class="blurred-input">************************************************</div>
+            </div>
+            <div class="form-group">
+                <label>Secret Key</label>
+                <div class="blurred-input">************************************************</div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn btn-accent" style="flex: 1;" onclick="alert('Demo Mode: Keys connected and blurred for privacy.')">Connect (Encrypted)</button>
+                <button class="btn" style="flex: 1;" onclick="document.getElementById('api-modal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    {% if status %}
+    <div class="status-bar">
+        <span>ℹ️ {{ status }}</span>
+        <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; cursor:pointer;">&times;</button>
+    </div>
+    {% endif %}
+
+    <div class="connection-bar">
+        <div class="env-info">
+            <span class="env-tag">{{ env }}</span>
+            <span style="color: var(--text-muted);">Binance Connectivity:</span>
+            {% if account.error %}
+                <span class="text-danger">Disconnected ({{ account.error }})</span>
+            {% else %}
+                <span class="text-success">Connected</span>
+            {% endif %}
+        </div>
+        <div class="account-info" id="account-snapshot">
+            {% if market == 'spot' %}
+                <div class="account-stat">
+                    <span class="stat-label">Estimated Value</span>
+                    <span class="stat-value highlight">{{ "%.2f"|format(account.estimated_total_usdt or 0) }} USDT</span>
+                </div>
+                <div class="account-stat">
+                    <span class="stat-label">Assets</span>
+                    <span class="stat-value">{{ account.asset_count or 0 }}</span>
+                </div>
+            {% else %}
+                <div class="account-stat">
+                    <span class="stat-label">Wallet Balance</span>
+                    <span class="stat-value highlight">{{ "%.2f"|format(account.wallet_balance or 0) }} USDT</span>
+                </div>
+                <div class="account-stat">
+                    <span class="stat-label">Unrealized PnL</span>
+                    <span class="stat-value {{ 'up' if (account.unrealized_profit or 0) >= 0 else 'down' }}">
+                        {{ "%.2f"|format(account.unrealized_profit or 0) }}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <main class="dashboard-main">
+        <aside class="panel-left">
+            <section class="card">
+                <h3 class="card-title">Market Symbols</h3>
+                <div class="symbol-select-container">
+                    <select id="symbol-dropdown" onchange="handleSymbolChange()">
+                        {% if not symbols %}
+                            <option value="">No symbols found</option>
+                        {% endif %}
+                        {% for sym in symbols %}
+                            <option value="{{ sym }}" {{ 'selected' if sym == selected_symbol else '' }}>{{ sym }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div id="basic-stats-container" class="basic-stats">
+                    {% if analysis %}
+                        <div class="stat-row">
+                            <span class="stat-label">Total Trades</span>
+                            <span class="stat-value" id="stat-total-trades">{{ analysis.total_trades }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Buys / Sells</span>
+                            <span class="stat-value" id="stat-buys-sells">{{ analysis.buy_count }} / {{ analysis.sell_count }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Last Trade</span>
+                            <span class="stat-value" id="stat-last-trade" style="font-size: 0.8rem;">{{ analysis.last_trade_time or 'N/A' }}</span>
+                        </div>
+                    {% else %}
+                        <p class="empty-msg">No data available.</p>
+                    {% endif %}
+                </div>
+
+                {% if not symbols %}
+                <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); background: #2b3139; padding: 0.75rem; border-radius: 4px;">
+                    No trades found for this market. Use the CLI to sync trades (e.g. <code>sync-binance --symbol BTCUSDT --market {{ market }}</code>).
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="card">
+                <h3 class="card-title">Sync Latest Trades</h3>
+                <form action="/sync" method="post" class="sync-form">
+                    <input type="hidden" name="market" value="{{ market }}">
+                    <div class="form-group">
+                        <input type="text" name="symbol" value="{{ selected_symbol or 'BTCUSDT' }}" class="form-input" placeholder="Symbol">
+                    </div>
+                    <div class="form-group">
+                        <select name="limit" class="form-input">
+                            <option value="20">Last 20</option>
+                            <option value="50" selected>Last 50</option>
+                            <option value="100">Last 100</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-accent">Sync from Binance</button>
+                </form>
+            </section>
+
+            <section class="card journal-section">
+                <h3 class="card-title">Trading Journal</h3>
+                <form action="/journal" method="post" class="journal-form">
+                    <input type="hidden" name="market" value="{{ market }}">
+                    <input type="hidden" name="symbol" value="{{ selected_symbol or '' }}">
+                    <div class="form-group">
+                        <select name="tag" class="form-input">
+                            <option value="general">General</option>
+                            <option value="pretrade">Pre-trade</option>
+                            <option value="fear">Fear/Greed</option>
+                            <option value="confidence">High Confidence</option>
+                            <option value="revenge">Revenge/Tilt</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <textarea name="text" class="form-input" rows="3" placeholder="How are you feeling about the market?"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Save Entry</button>
+                </form>
+            </section>
+
+            <div class="card">
+                <h3 class="card-title">Binance Connection</h3>
+                <button class="btn btn-accent" onclick="showInfo('testnet-info')">Use Testnet (recommended)</button>
+                <div id="testnet-info" class="info-text">Current build is wired to Binance testnet via local .env keys.</div>
+                
+                <button class="btn" onclick="showInfo('live-info')">Use Live (read-only only)</button>
+                <div id="live-info" class="info-text">For this demo, live keys are also configured via .env. Always use read-only API keys only.</div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">API Keys (Demo)</h3>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="text" class="form-input" placeholder="Paste demo key...">
+                </div>
+                <div class="form-group">
+                    <label>Secret Key</label>
+                    <input type="password" class="form-input" placeholder="Paste demo secret...">
+                </div>
+                <button class="btn" disabled>Save (Demo Only)</button>
+                <p class="warning-text-small">
+                    Demo-only input. In this version, keys are not stored here; real configuration uses the local .env file. Never paste real production keys into this form.
+                </p>
+            </div>
+        </aside>
+
+        <section class="panel-right" style="position: relative;">
+            <div id="analysis-overlay"><div class="loader"></div></div>
+            
+            <div class="card market-intel-card" id="market-intel" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #181a20 0%, #1e2329 100%); border: 1px solid var(--accent);">
+                <h3 class="card-title" style="color: var(--accent); margin-bottom: 0.75rem;">🛰️ Real-time Market Intelligence</h3>
+                <div class="market-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                    <div class="intel-box">
+                        <div class="stat-label">Sentiment (Fear & Greed)</div>
+                        <div class="stat-value" id="intel-fng" style="font-size: 1.2rem;">
+                            {{ analysis.market_context.fear_greed.value or '50' }} ({{ analysis.market_context.fear_greed.classification or 'Neutral' }})
+                        </div>
+                    </div>
+                    <div class="intel-box">
+                        <div class="stat-label">24h Market Change</div>
+                        <div class="stat-value {{ 'up' if (analysis.market_context.global.market_cap_change or 0) >= 0 else 'down' }}" id="intel-global-change">
+                            {{ "%.2f"|format(analysis.market_context.global.market_cap_change or 0) }}%
+                        </div>
+                    </div>
+                    <div class="intel-box">
+                        <div class="stat-label">Real-time Volatility</div>
+                        <div class="stat-value text-yellow" id="intel-vol">
+                            {{ analysis.market_context.symbol.volatility_ratio or '0.0' }}%
+                        </div>
+                    </div>
+                    <div class="intel-box">
+                        <div class="stat-label">Symbol Price</div>
+                        <div class="stat-value highlight" id="intel-price">
+                            {{ "%.2f"|format(analysis.market_context.symbol.last_price or 0) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card alerts-card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--success);">
+                <h3 class="card-title" style="font-size: 0.9rem; margin-bottom: 0.5rem;">🔔 Real-time Behavioral Alerts</h3>
+                <div id="alerts-feed" style="max-height: 100px; overflow-y: auto; font-size: 0.85rem;">
+                    <div class="alert-item" style="padding: 0.25rem 0; color: var(--text-muted);">
+                        <span style="color: var(--success);">[SYSTEM]</span> Monitoring active. Connect your Binance API to start real-time tracking.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="analysis-card" style="min-height: 400px;">
+                <h3 class="card-title">
+                    Behavioral Analysis
+                    <span id="analysis-symbol-label" class="text-yellow" style="font-size: 0.9rem;">
+                        {{ selected_symbol or '' }}
+                    </span>
+                </h3>
+
+                <div id="analysis-content">
+                    {% if analysis %}
+                        <div class="discipline-section">
+                            <div style="max-width: 60%;">
+                                <p style="margin: 0; font-size: 0.95rem;">Psychological Discipline Score</p>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.25rem 0 0 0;">
+                                    Calculated from your trade history, win-rate consistency, and behavioral detectors.
+                                </p>
+                            </div>
+                            <div class="score-display">
+                                <div class="score-number" id="discipline-score">{{ analysis.discipline_score }}</div>
+                                <div class="score-desc">Score</div>
+                            </div>
+                        </div>
+
+                        <div class="summary-lists">
+                            <div class="list-group">
+                                <h4>Detected Patterns</h4>
+                                <div id="patterns-list">
+                                    {% if not analysis.patterns %}
+                                        <p class="empty-msg" style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 4px;">No critical patterns detected.</p>
+                                    {% endif %}
+                                    {% for p in analysis.patterns %}
+                                        <div class="pattern-item">⚠️ {{ p.message }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="list-group">
+                                <h4>Guardrail Suggestions</h4>
+                                <div id="suggestions-list">
+                                    {% if not analysis.suggestions %}
+                                        <p class="empty-msg" style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 4px;">Maintain your current discipline.</p>
+                                    {% endif %}
+                                    {% for s in analysis.suggestions %}
+                                        <div class="suggestion-item">🛡️ {{ s }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="empty-msg" style="padding: 5rem 0;">
+                            Select a symbol with trades to see your behavioral analysis.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="bottom-warning">
+        Demo trading psychologist. Do NOT use this UI for live market decisions. Always use read-only API keys only; no trading or withdrawals.
+    </div>
+
+    <script>
+        function showInfo(id) {
+            // Hide all info texts first
+            document.querySelectorAll('.info-text').forEach(el => el.style.display = 'none');
+            // Show the clicked one
+            document.getElementById(id).style.display = 'block';
+        }
+
+        async function handleSymbolChange() {
+            const symbol = document.getElementById('symbol-dropdown').value;
+            if (!symbol) return;
+
+            // Update URL without reload
+            const url = new URL(window.location);
+            url.searchParams.set('symbol', symbol);
+            window.history.pushState({}, '', url);
+
+            // Fetch latest analysis
+            const overlay = document.getElementById('analysis-overlay');
+            overlay.style.display = 'flex';
+
+            try {
+                const response = await fetch(`/api/analysis/${symbol}`);
+                if (!response.ok) throw new Error('Failed to fetch analysis');
+                const data = await response.json();
+                
+                updateAnalysisUI(symbol, data);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('analysis-content').innerHTML = `
+                    <div class="empty-msg text-danger">
+                        Failed to load analysis for ${symbol}. Please try again later.
+                    </div>
+                `;
+            } finally {
+                overlay.style.display = 'none';
+            }
+        }
+
+        function addAlert(tag, message, colorClass = 'success') {
+            const feed = document.getElementById('alerts-feed');
+            const time = new Date().toLocaleTimeString();
+            const alertHtml = `
+                <div class="alert-item" style="padding: 0.25rem 0; animation: fadeIn 0.5s;">
+                    <span class="text-muted" style="font-size: 0.75rem;">[${time}]</span>
+                    <span class="text-${colorClass}" style="font-weight: bold;">[${tag}]</span>
+                    ${message}
+                </div>
+            `;
+            feed.insertAdjacentHTML('afterbegin', alertHtml);
+            if (feed.children.length > 5) feed.lastElementChild.remove();
+        }
+
+        function updateAnalysisUI(symbol, data) {
+            // Add alert for sync
+            addAlert('ANALYSIS', `Behavioral metrics updated for ${symbol}. Discipline: ${data.discipline_score}/100`);
+            
+            // Check for critical patterns and alert them
+            if (data.patterns && data.patterns.length > 0) {
+                data.patterns.forEach(p => {
+                    addAlert('DETECTED', p.message, 'yellow');
+                });
+            }
+
+            // Update Label
+            document.getElementById('analysis-symbol-label').innerText = symbol;
+
+            // Update Real-time Intel
+            const ctx = data.market_context || {};
+            document.getElementById('intel-fng').innerText = `${ctx.fear_greed?.value || '50'} (${ctx.fear_greed?.classification || 'Neutral'})`;
+            
+            const globalChange = ctx.global?.market_cap_change || 0;
+            const globalEl = document.getElementById('intel-global-change');
+            globalEl.innerText = `${globalChange.toFixed(2)}%`;
+            globalEl.className = `stat-value ${globalChange >= 0 ? 'up' : 'down'}`;
+            
+            document.getElementById('intel-vol').innerText = `${ctx.symbol?.volatility_ratio || '0.0'}%`;
+            document.getElementById('intel-price').innerText = (ctx.symbol?.last_price || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // Update Left Stats
+            document.getElementById('stat-total-trades').innerText = data.total_trades;
+            document.getElementById('stat-buys-sells').innerText = `${data.buy_count} / ${data.sell_count}`;
+            document.getElementById('stat-last-trade').innerText = data.last_trade_time || 'N/A';
+
+            // Update Discipline Score
+            document.getElementById('discipline-score').innerText = data.discipline_score;
+
+            // Update Patterns
+            const patternsDiv = document.getElementById('patterns-list');
+            if (data.patterns && data.patterns.length > 0) {
+                patternsDiv.innerHTML = data.patterns.map(p => `
+                    <div class="pattern-item">⚠️ ${p.message}</div>
+                `).join('');
+            } else {
+                patternsDiv.innerHTML = '<p class="empty-msg" style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 4px;">No critical patterns detected.</p>';
+            }
+
+            // Update Suggestions
+            const suggestionsDiv = document.getElementById('suggestions-list');
+            if (data.suggestions && data.suggestions.length > 0) {
+                suggestionsDiv.innerHTML = data.suggestions.map(s => `
+                    <div class="suggestion-item">🛡️ ${s}</div>
+                `).join('');
+            } else {
+                suggestionsDiv.innerHTML = '<p class="empty-msg" style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 4px;">Maintain your current discipline.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

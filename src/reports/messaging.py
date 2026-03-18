@@ -2,33 +2,46 @@ from __future__ import annotations
 
 
 def render_trader_brief(summary: dict, account: dict | None = None, market: str = "spot") -> str:
-    lines: list[str] = []
+    """Render a compact, chat-friendly brief based on the analysis summary."""
 
+    lines: list[str] = []
+    
+    symbol = summary.get("selected_symbol", "Account")
+    discipline = summary.get("discipline_score", 50)
+    
+    # Header with emoji based on score
+    mood_emoji = "🛡️" if discipline >= 80 else "⚠️" if discipline >= 50 else "🛑"
+    lines.append(f"{mood_emoji} *TradeMind Brief: {symbol}*")
+    lines.append(f"Discipline Score: *{discipline}/100*")
+    lines.append("")
+
+    # Account context
     if account:
         if market == "futures":
-            lines.append(f"Futures account: wallet {account.get('wallet_balance', 0):.2f} USDT | unrealized {account.get('unrealized_profit', 0):.2f} USDT | available {account.get('available_balance', 0):.2f} USDT")
+            val = account.get('wallet_balance', 0)
+            pnl = account.get('unrealized_profit', 0)
+            lines.append(f"💰 Wallet: {val:.2f} USDT | PnL: {pnl:.2f}")
         else:
-            lines.append(f"Spot account est.: ~{account.get('estimated_total_usdt', 0):.2f} USDT across {account.get('asset_count', 0)} assets")
+            val = account.get('estimated_total_usdt', 0)
+            lines.append(f"💰 Est. Value: {val:.2f} USDT")
+        lines.append("")
 
-    lines.append(
-        f"Analysis sample: {summary.get('trade_count', 0)} trades | patterns: {summary.get('pattern_count', 0)} | discipline score: {summary.get('behavioral_score', 50)}/100"
-    )
-    if summary.get("total_pnl") is not None:
-        lines.append(f"Local PnL proxy: {summary.get('total_pnl', 0):.4f}")
-
-    patterns = summary.get("patterns", [])[:3]
+    # Patterns
+    patterns = summary.get("patterns", [])
     if patterns:
-        lines.append("Top signals:")
-        for pattern in patterns:
-            lines.append(f"- {pattern['pattern']} ({round(pattern['confidence'] * 100)}%): {pattern['summary']}")
+        lines.append("*Detected Patterns:*")
+        for p in patterns[:3]:
+            msg = p.get("message") or p.get("summary", "")
+            lines.append(f"• {msg}")
+        lines.append("")
 
-    plan = summary.get("intervention_plan", [])[:3]
-    if plan:
-        lines.append("Suggested next actions:")
-        for item in plan:
-            lines.append(f"- {item}")
-
-    if not patterns:
-        lines.append("No strong behavioral issues detected in the current sample.")
+    # Actions
+    actions = summary.get("suggestions", [])
+    if actions:
+        lines.append("*Guardrail Plan:*")
+        for a in actions[:3]:
+            lines.append(f"✅ {a}")
+    else:
+        lines.append("✨ Maintaining strong discipline. No new guardrails suggested.")
 
     return "\n".join(lines)

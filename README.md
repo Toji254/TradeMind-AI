@@ -1,103 +1,79 @@
-# TradeMind AI
+# TradeMind AI - Behavioral Trading Psychology Assistant
 
-TradeMind AI is an open-source, privacy-first OpenClaw assistant that acts like a confidential trading psychologist.
+TradeMind AI is a privacy-first, local-first assistant that analyzes your trading behavior on Binance to uncover emotional patterns like FOMO, panic selling, and revenge trading.
 
-Instead of pretending to predict the market, it analyzes your personal trading behavior locally to uncover emotional patterns like FOMO buying, panic selling, revenge trading, overtrading, poor streak behavior, and time-based impulsive decision making.
+## 🚀 Step-by-Step Setup Guide
 
-It then turns those findings into:
+### 1. Prerequisites
+- **Python 3.14+** installed.
+- **Git** installed.
+- **Binance API Keys** (Read-only recommended).
 
-- tailored coaching sessions
-- personalized mindset exercises
-- behavioral strategy tweaks
-- real-time intervention suggestions
-- better long-term discipline
-- a local journal-backed feedback loop
-- a dark-mode trading dashboard inspired by serious exchange UIs
+### 2. Clone the Repository
+```bash
+git clone https://github.com/your-username/trademind-ai.git
+cd TradeMind-AI
+```
 
-## Core Principles
-
-- **Privacy first** — your data stays on your device by default
-- **Behavior over hype** — this is about psychology and discipline, not fake alpha
-- **Explainability** — rules and insights should be understandable
-- **Open source** — pattern detectors and workflows are transparent
-- **Local processing** — no cloud analytics required for the core product
-
-## Current V1 Capabilities
-
-- Binance Spot Testnet account connectivity
-- Futures-ready testnet config path and sync plumbing
-- local trade sync into SQLite
-- local symbol discovery
-- behavior detectors for:
-  - FOMO buying
-  - panic selling
-  - revenge trading
-  - streak behavior
-  - time-of-day loss concentration
-  - rapid-fire overtrading
-- coaching-style local analysis reports
-- journal entry capture with sentiment scoring
-- generated intervention / guardrail plans
-- JSON analysis output for future UI or OpenClaw delivery
-- OKX-inspired dark web UI with:
-  - dashboard stats
-  - local symbol switching
-  - sync form
-  - equity curve chart
-  - hourly activity chart
-  - side mix chart
-  - patterns panel
-  - guardrail plan panel
-  - journal workflow
-
-## Quick Start
-
+### 3. Set Up Virtual Environment
 ```bash
 python -m venv .venv
-.venv\\Scripts\\activate
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+```
+
+### 4. Install Dependencies
+```bash
 pip install -r requirements.txt
-python -m src.app.cli doctor
+# If using the automation demo features:
+playwright install chromium
+```
+
+### 5. Configure Environment Variables
+Copy `.env.example` to `.env` and fill in your settings:
+```bash
+cp .env.example .env
+```
+Open `.env` and add your Binance API keys if you want them to be pre-loaded.
+
+### 6. Initialize Database
+```bash
 python -m src.app.cli init
-python -m src.app.cli sync-and-analyze --symbol BTCUSDT --market spot
 ```
 
-## Run the Web UI
-
+### 7. Run the Application
+#### Web Dashboard (Recommended)
 ```bash
-python -m src.app.cli serve-web --host 127.0.0.1 --port 8000
-```
-
-Then open:
-
-```text
-http://127.0.0.1:8000
-```
-
-## Useful Commands
-
-```bash
-python -m src.app.cli binance-ping --market spot
-python -m src.app.cli binance-account --market spot
-python -m src.app.cli sync-binance --symbol BTCUSDT --limit 50 --market spot
-python -m src.app.cli sync-binance --symbol BTCUSDT --limit 50 --market futures
-python -m src.app.cli analyze-local --symbol BTCUSDT --limit 50
-python -m src.app.cli coaching-plan --symbol BTCUSDT
-python -m src.app.cli journal-add --tag pretrade "Feeling impatient after missing the move"
-python -m src.app.cli journal-list
 python -m src.app.cli serve-web
 ```
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
-## Futures Note
+#### CLI Commands
+- **Check Configuration:** `python -m src.app.cli doctor`
+- **Sync Trades:** `python -m src.app.cli sync-binance --symbol BTCUSDT --limit 50 --market spot`
+- **Analyze Behavior:** `python -m src.app.cli analyze-local --symbol BTCUSDT`
+- **Coaching Plan:** `python -m src.app.cli coaching-plan --symbol BTCUSDT`
 
-Futures support is now wired in the code path, but you still need to provide:
+## 📊 Key Features
+- **Behavioral Score:** A real-time discipline index based on your recent trades.
+- **Pattern Detection:** Identifies FOMO buys, panic sells, and revenge trading using SMA-based logic.
+- **Coaching Summary:** Generates actionable psychology guardrails to help you stay disciplined.
+- **Local SQLite Storage:** Your trade history and journal notes never leave your machine.
+- **Telegram Integration:** Get real-time alerts when new behavioral insights are ready.
 
-- `BINANCE_FUTURES_API_KEY`
-- `BINANCE_FUTURES_API_SECRET`
+## 🔒 Privacy & Security
+- **Local First:** All analysis and trade storage happen on your local machine.
+- **Read-Only Keys:** TradeMind AI only requires **Read-Only** API access. It never executes trades or withdraws funds.
+- **UI Key Management:** You can now enter your API keys directly in the web dashboard for a seamless setup.
 
-in your local `.env` before live futures testnet sync/auth can run.
+## 🛠️ Tech Stack
+- **Backend:** FastAPI, Typer
+- **Database:** SQLite, SQLAlchemy
+- **Analysis:** Pandas, NumPy, VaderSentiment
+- **Frontend:** HTML/CSS (OKX-inspired dark mode), Chart.js
+- **Integrations:** Binance (ccxt/requests), Telegram Bot API
 
-## Safety / Positioning
-
-TradeMind AI is **not** a financial advisor and does **not** provide guaranteed returns, trade signals, or profit promises.
-
-Its purpose is to help traders improve discipline, self-awareness, and risk behavior.
+## 📝 License
+MIT License. See `LICENSE` for details.

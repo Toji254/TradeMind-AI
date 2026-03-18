@@ -23,5 +23,9 @@ class Settings(BaseModel):
     binance_spot_base_url: str = os.getenv("BINANCE_SPOT_BASE_URL", "https://testnet.binance.vision")
     binance_futures_base_url: str = os.getenv("BINANCE_FUTURES_BASE_URL", "https://testnet.binancefuture.com")
 
+    telegram_bot_token: str | None = os.getenv("TELEGRAM_BOT_TOKEN")
+    telegram_chat_id: str | None = os.getenv("TELEGRAM_CHAT_ID")
+    telegram_bot_username: str = os.getenv("TELEGRAM_BOT_USERNAME", "TradeMindAIBot")
+
 
 settings = Settings()

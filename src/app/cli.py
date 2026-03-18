@@ -30,12 +30,41 @@ service = TradeMindService()
 @app.command()
 def doctor() -> None:
     table = Table(title="TradeMind AI Doctor")
-    table.add_column("Check")
-    table.add_column("Value")
-    table.add_row("Environment", settings.env)
-    table.add_row("Database Path", str(settings.db_path))
-    table.add_row("Spot API Configured", "yes" if settings.binance_spot_api_key else "no")
-    table.add_row("Futures API Configured", "yes" if settings.binance_futures_api_key else "no")
+    table.add_column("Check", style="cyan")
+    table.add_column("Value", style="magenta")
+    table.add_column("Status", style="bold")
+
+    # Env check
+    table.add_row("Environment", settings.env, "[green]OK[/green]")
+
+    # DB Check
+    db_status = "[red]Missing[/red]"
+    if settings.db_path.exists():
+        db_size = settings.db_path.stat().st_size / 1024
+        db_status = f"[green]OK ({db_size:.1f} KB)[/green]"
+    table.add_row("Database Path", str(settings.db_path), db_status)
+
+    # API Key presence
+    spot_keys = settings.binance_spot_api_key and settings.binance_spot_api_secret
+    futures_keys = settings.binance_futures_api_key and settings.binance_futures_api_secret
+    table.add_row("Spot Configured", "yes" if spot_keys else "no", "[green]OK[/green]" if spot_keys else "[yellow]Missing[/yellow]")
+    table.add_row("Futures Configured", "yes" if futures_keys else "no", "[green]OK[/green]" if futures_keys else "[yellow]Missing[/yellow]")
+
+    # Connection tests
+    if spot_keys:
+        try:
+            _build_client("spot").ping("spot")
+            table.add_row("Spot API Ping", "Connected", "[green]SUCCESS[/green]")
+        except Exception as e:
+            table.add_row("Spot API Ping", "Failed", f"[red]{str(e)}[/red]")
+
+    if futures_keys:
+        try:
+            _build_client("futures").ping("futures")
+            table.add_row("Futures API Ping", "Connected", "[green]SUCCESS[/green]")
+        except Exception as e:
+            table.add_row("Futures API Ping", "Failed", f"[red]{str(e)}[/red]")
+
     console.print(table)
 
 
@@ -57,9 +86,32 @@ def demo() -> None:
 
 @app.command("serve-web")
 def serve_web(host: str = typer.Option("127.0.0.1"), port: int = typer.Option(8000)) -> None:
+    """Serve the modern TradeMind AI dashboard (V2)."""
     import uvicorn
+    uvicorn.run("src.web2.app:app", host=host, port=port, reload=False)
 
+
+@app.command("serve-web-legacy")
+def serve_web_legacy(host: str = typer.Option("127.0.0.1"), port: int = typer.Option(8001)) -> None:
+    """Serve the original TradeMind AI dashboard (V1)."""
+    import uvicorn
     uvicorn.run("src.web.app:app", host=host, port=port, reload=False)
+
+
+@app.command("serve-dev")
+def serve_dev(host: str = typer.Option("127.0.0.1"), port: int = typer.Option(8000)) -> None:
+    """Serve with hot-reload for development."""
+    import uvicorn
+    uvicorn.run("src.web2.app:app", host=host, port=port, reload=True)
+
+
+@app.command("run-bot")
+def run_bot() -> None:
+    """Start the TradeMind Telegram Bot."""
+    import asyncio
+    from src.app.bot_runner import TradeMindBot
+    bot = TradeMindBot()
+    asyncio.run(bot.start())
 
 
 @app.command("binance-ping")

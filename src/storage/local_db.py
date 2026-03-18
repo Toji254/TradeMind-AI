@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS journal_entries (
     text TEXT NOT NULL,
     sentiment_compound REAL NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_trades_symbol_time ON trades (symbol, timestamp);
+CREATE INDEX IF NOT EXISTS idx_trades_time ON trades (timestamp);
+CREATE INDEX IF NOT EXISTS idx_journal_time ON journal_entries (created_at);
 """
 
 
@@ -101,6 +105,17 @@ def load_trades(db_path: Path, symbol: str | None = None, limit: int = 100) -> l
         for row in rows
     ]
     return list(reversed(trades))
+
+
+def list_symbols_by_market(db_path: Path, market: str = "spot") -> list[str]:
+    init_db(db_path)
+    pattern = "spot_testnet%" if market == "spot" else "futures_testnet%"
+    with sqlite3.connect(db_path) as connection:
+        rows = connection.execute(
+            "SELECT DISTINCT symbol FROM trades WHERE notes LIKE ? ORDER BY symbol ASC",
+            (pattern,),
+        ).fetchall()
+    return [row[0] for row in rows]
 
 
 def list_symbols(db_path: Path) -> list[tuple[str, int]]:

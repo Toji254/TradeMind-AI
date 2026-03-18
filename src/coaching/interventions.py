@@ -32,11 +32,31 @@ EXERCISES = {
 
 
 def build_intervention_plan(results: list[DetectionResult]) -> list[str]:
+    """Build a concise, de-duplicated intervention plan.
+
+    - Prioritises detectors with higher confidence.
+    - Prefers detector-specific coaching attached to the DetectionResult.
+    - Falls back to EXERCISES table for any remaining guardrails.
+    - De-duplicates identical lines across detectors.
+    """
+
     plan: list[str] = []
     seen: set[str] = set()
-    for result in results:
+
+    # Sort by confidence so the most certain signals surface first
+    ordered = sorted(results, key=lambda r: getattr(r, "confidence", 0), reverse=True)
+
+    for result in ordered:
+        # 1) Use any coaching lines attached to the detection itself
+        for item in getattr(result, "coaching", []) or []:
+            if item not in seen:
+                seen.add(item)
+                plan.append(item)
+
+        # 2) Fill in from the generic EXERCISES table for this detector
         for item in EXERCISES.get(result.detector, []):
             if item not in seen:
                 seen.add(item)
                 plan.append(item)
+
     return plan

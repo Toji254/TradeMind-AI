@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TradeMind AI - Backend Logs</title>
+    <style>
+        body { background-color: #0b0e11; color: #0ecb81; font-family: 'Courier New', monospace; padding: 20px; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #1e2329; padding: 5px 0; }
+        .timestamp { color: #848e9c; margin-right: 10px; }
+        .info { color: #f0b90b; }
+        .cursor { display: inline-block; width: 10px; height: 18px; background: #0ecb81; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <h2>> TradeMind AI Backend Service (v2.1.0)</h2>
+    <div id="logs"></div>
+    <div class="cursor"></div>
+
+    <script>
+        const logs = [
+            "[SYSTEM] Initializing TradeMind AI Service...",
+            "[DB] Connected to local SQLite storage (trademind.db)",
+            "[AUTH] Binance Testnet Keys loaded",
+            "[MARKET] Connecting to CCXT (Binance Spot)... OK",
+            "[MARKET] Connecting to CoinGecko API... OK",
+            "[INTEL] Fear & Greed Index: 65 (Greed)",
+            "[INTEL] Global Volatility: 4.2% (High)",
+            "[SERVER] Server listening on http://127.0.0.1:8000",
+            "[AGENT] OpenClaw Bridge active on port 18789",
+            "[INFO] Waiting for incoming trade signals...",
+            "[SYNC] Synced 50 trades for BTCUSDT",
+            "[ANALYSIS] Running FOMO Detector... DONE",
+            "[ANALYSIS] Running Revenge Trading Detector... DONE",
+            "[RISK] Alert: High volatility detected. Guardrails active."
+        ];
+
+        let i = 0;
+        function addLog() {
+            if (i < logs.length) {
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                const time = new Date().toISOString().split('T')[1].split('.')[0];
+                div.innerHTML = `<span class="timestamp">[${time}]</span> ${logs[i]}`;
+                document.getElementById('logs').appendChild(div);
+                window.scrollTo(0, document.body.scrollHeight);
+                i++;
+                setTimeout(addLog, Math.random() * 800 + 200);
+            }
+        }
+        addLog();
+    </script>
+</body>
+</html>

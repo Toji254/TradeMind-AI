@@ -21,10 +21,74 @@
         </div>
       </div>
       <div class="topbar-actions">
+        <button id="connect-api-btn" class="status-pill connect-btn">Connect API</button>
+        {% if has_spot_keys %}<span class="status-pill connected-pill">Spot Connected</span>{% endif %}
+        {% if has_futures_keys %}<span class="status-pill connected-pill">Futures Connected</span>{% endif %}
         <span class="market-pill {{ market }}">{{ market|upper }}</span>
         <span class="status-pill">local-first</span>
       </div>
     </header>
+
+    <!-- API Modal -->
+    <div id="api-modal" class="modal-overlay" style="display: none;">
+      <div class="okx-panel modal-content">
+        <div class="panel-heading"><h2>Connect Binance</h2><span>secure sync</span></div>
+        
+        <div class="tabs-header">
+          <button id="tab-direct" class="tab-btn active">Direct Entry</button>
+          <button id="tab-telegram" class="tab-btn">Telegram Push</button>
+        </div>
+
+        <div id="direct-pane" class="tab-content">
+          <form method="post" action="/config-keys" class="stack compact-form">
+            <label>
+              <span>Market Type</span>
+              <select name="market_type">
+                <option value="spot">Spot Keys</option>
+                <option value="futures">Futures Keys</option>
+              </select>
+            </label>
+            <label>
+              <span>API Key</span>
+              <input type="text" name="api_key" placeholder="Enter your Binance API Key" required />
+            </label>
+            <label>
+              <span>API Secret</span>
+              <input type="password" name="api_secret" placeholder="Enter your Binance API Secret" required />
+            </label>
+            <div class="modal-actions">
+              <button type="submit" class="primary">Connect (Encrypted)</button>
+              <button type="button" class="close-modal-btn secondary">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="telegram-pane" class="tab-content" style="display: none;">
+          <div class="stack compact-form">
+            <p class="muted text-sm">Send your keys to our Telegram Bot, then enter your Chat ID here to claim them locally.</p>
+            <div class="telegram-link-box">
+              <a href="https://t.me/TradeMindAiCoachBot" target="_blank" class="tg-link">Open @TradeMindAiCoachBot</a>
+            </div>
+            <form method="post" action="/claim-telegram-keys" class="stack">
+              <label>
+                <span>Your Chat ID</span>
+                <input type="text" name="chat_id" placeholder="Enter ID from Bot" required />
+              </label>
+              <div class="modal-actions">
+                <button type="submit" class="primary">Claim Keys</button>
+                <button type="button" class="close-modal-btn secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {% if has_keys %}
+        <form method="post" action="/clear-keys" style="margin-top: 1.5rem; border-top: 1px solid var(--border-soft); padding-top: 1rem;">
+          <button type="submit" class="danger-btn">Clear Saved Keys</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
 
     {% if status %}
     <section class="notice">{{ status }}</section>
@@ -251,6 +315,52 @@
         plugins: {
           legend: { labels: { color: '#d1d5db' } }
         }
+      }
+    });
+
+    // Tab Switching
+    const tabDirect = document.getElementById('tab-direct');
+    const tabTelegram = document.getElementById('tab-telegram');
+    const paneDirect = document.getElementById('direct-pane');
+    const paneTelegram = document.getElementById('telegram-pane');
+
+    if (tabDirect && tabTelegram) {
+      tabDirect.addEventListener('click', () => {
+        tabDirect.classList.add('active');
+        tabTelegram.classList.remove('active');
+        paneDirect.style.display = 'block';
+        paneTelegram.style.display = 'none';
+      });
+
+      tabTelegram.addEventListener('click', () => {
+        tabTelegram.classList.add('active');
+        tabDirect.classList.remove('active');
+        paneTelegram.style.display = 'block';
+        paneDirect.style.display = 'none';
+      });
+    }
+
+    // API Modal Logic
+    const modal = document.getElementById('api-modal');
+    const openBtn = document.getElementById('connect-api-btn');
+    const closeBtns = document.querySelectorAll('.close-modal-btn');
+
+    if (openBtn) {
+      openBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+      });
+    }
+
+    closeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    });
+
+    // Close on overlay click
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
       }
     });
   </script>

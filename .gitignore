@@ -39,3 +39,5 @@ htmlcov/
 
 # Jupyter
 .ipynb_checkpoints/
+
+debug_failure.png

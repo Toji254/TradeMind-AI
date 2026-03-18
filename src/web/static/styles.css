@@ -76,6 +76,73 @@ button:hover { background: #e5e7eb; }
 .tag { color: var(--accent); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
 .sentiment, small, .muted { color: var(--muted); }
 .journal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* API Modal Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000;
+}
+.modal-content {
+  width: min(500px, calc(100vw - 40px));
+  padding: 30px;
+  border-color: var(--accent);
+}
+.modal-actions {
+  display: flex; gap: 12px; margin-top: 10px;
+}
+.modal-actions button { flex: 1; }
+button.secondary { background: #1a1e24; color: #fff; border: 1px solid var(--border); }
+button.danger-btn { background: #3a1a1a; color: #ff5b5b; border: 1px solid #5a2a2a; width: 100%; }
+.connect-btn { background: #1a1e24; color: var(--accent); border-color: var(--accent); cursor: pointer; transition: all 0.2s; }
+.connect-btn:hover { background: var(--accent); color: #000; }
+.connected-pill { border-color: var(--buy); color: var(--buy) !important; background: rgba(0, 177, 93, 0.05); }
+
+/* Tabs inside Modal */
+.tabs-header {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 20px;
+}
+.tab-btn {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 10px 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-btn:hover {
+  color: #fff;
+}
+.text-sm { font-size: 0.85rem; }
+.telegram-link-box {
+  margin: 10px 0;
+}
+.tg-link {
+  display: block;
+  background: #0088cc;
+  color: white;
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.tg-link:hover {
+  background: #0077b3;
+}
+
 @media (max-width: 1180px) {
   .dashboard-grid { grid-template-columns: 1fr; }
   .stats-grid, .journal-grid, .dual-grid, .hero { grid-template-columns: 1fr; }
