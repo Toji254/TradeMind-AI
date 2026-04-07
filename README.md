@@ -72,7 +72,7 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 - **Backend:** FastAPI, Typer
 - **Database:** SQLite, SQLAlchemy
 - **Analysis:** Pandas, NumPy, VaderSentiment
-- **Frontend:** HTML/CSS (OKX-inspired dark mode), Chart.js
+- **Frontend:** HTML/CSS (Binance-inspired dark mode), Chart.js
 - **Integrations:** Binance (ccxt/requests), Telegram Bot API
 
 ## 📝 License
