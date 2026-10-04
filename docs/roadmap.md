@@ -1,5 +1,7 @@
 # TradeMind AI Roadmap
 
+> **Portfolio milestone:** TradeMind AI placed **3rd** in the Binance OpenClaw AI Assistant Build Contest and received **6 BNB** in April 2026.
+
 ## Phase 1 - MVP Foundation
 
 - [x] initialize repository
@@ -45,8 +47,13 @@
 
 ## Phase 6 - OpenClaw Experience
 
-- [ ] create OpenClaw-facing skill/workflow
-- [ ] support conversational analysis requests
+**Current state: hackathon prototype / integration layer.**
+
+- [x] expose TradeMind reports through an OpenClaw bridge
+- [x] add CLI output designed for OpenClaw workflows
+- [x] build presentation/demo automation around OpenClaw
+- [ ] create a reusable OpenClaw-facing skill/workflow
+- [ ] support full conversational analysis requests
 - [ ] schedule daily mindset prompts and reminders
 
 ## Phase 7 - Advanced Features
