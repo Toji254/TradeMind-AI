@@ -10,9 +10,9 @@ from playwright.async_api import async_playwright, Page
 # --- Load Environment -------------------------------------------------------
 load_dotenv()
 
-OPENCLAW_URL = os.getenv("OPENCLAW_URL", "http://127.0.0.1:18789")
-OPENCLAW_CHAT_URL = os.getenv("OPENCLAW_CHAT_URL", "http://127.0.0.1:18789/chat?session=agent%3Amain%3Amain")
-GATEWAY_WS_URL = os.getenv("GATEWAY_WS_URL", "ws://127.0.0.1:18789/gateway")
+OPENCLAW_URL = os.getenv("DEMO_OPENCLAW_URL", "http://127.0.0.1:18789")
+OPENCLAW_CHAT_URL = os.getenv("DEMO_OPENCLAW_CHAT_URL", "http://127.0.0.1:18789/chat?session=agent%3Amain%3Amain")
+GATEWAY_WS_URL = os.getenv("DEMO_GATEWAY_WS_URL", "ws://127.0.0.1:18789/gateway")
 GATEWAY_TOKEN = os.getenv("DEMO_GATEWAY_TOKEN")
 
 from src.connectors.telegram_bot import TelegramBotService
