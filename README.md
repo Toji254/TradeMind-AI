@@ -1,6 +1,8 @@
 # TradeMind AI
 
-> **A privacy-first behavioral trading coach for Binance traders — built with Python, FastAPI, SQLite, explainable behavioral detectors, and an OpenClaw integration.**
+> **portfolio:** privacy-first trading coach built with python, fastapi, sqlite, explainable behavior detectors, and openclaw.
+>
+> **tags:** `ai | python | data | crypto | binance | openclaw | vibe dev`
 
 <p align="center">
   <strong>Binance OpenClaw AI Assistant Build Contest — 3rd Place</strong><br/>
