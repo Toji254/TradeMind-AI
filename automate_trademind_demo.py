@@ -13,7 +13,7 @@ load_dotenv()
 OPENCLAW_URL = os.getenv("OPENCLAW_URL", "http://127.0.0.1:18789")
 OPENCLAW_CHAT_URL = os.getenv("OPENCLAW_CHAT_URL", "http://127.0.0.1:18789/chat?session=agent%3Amain%3Amain")
 GATEWAY_WS_URL = os.getenv("GATEWAY_WS_URL", "ws://127.0.0.1:18789/gateway")
-GATEWAY_TOKEN = os.getenv("GATEWAY_TOKEN", "7c2a35d9f9c87551c6b579a34358225a0fc5a8710377db4e")
+GATEWAY_TOKEN = os.getenv("DEMO_GATEWAY_TOKEN")
 
 from src.connectors.telegram_bot import TelegramBotService
 
