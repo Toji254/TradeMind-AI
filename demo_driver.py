@@ -137,6 +137,8 @@ async def run_detailed_demo():
         await page.goto(OPENCLAW_URL)
         await asyncio.sleep(2)
         if await page.locator("input[placeholder*='ws://']").is_visible():
+            if not GATEWAY_TOKEN:
+                raise RuntimeError("DEMO_GATEWAY_TOKEN is required when the local OpenClaw gateway asks for authentication.")
             await page.fill("input[placeholder*='ws://']", GATEWAY_WS_URL)
             await page.fill("input[type='password']", GATEWAY_TOKEN)
             await page.keyboard.press("Enter")
